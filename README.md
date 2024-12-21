@@ -22,7 +22,7 @@
 ## 📂 Project Structure
 
 ```
-rate-limit-patterns/
+limits/
 ├── rate_limit_rules/       # 🔧 Generated rate limit config files
 │   ├── caddy/              # Caddy rate limit configs
 │   ├── nginx/              # Nginx rate limit configs
