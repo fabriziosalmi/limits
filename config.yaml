@@ -1,0 +1,17 @@
+# config.yaml
+global:
+  requests_per_minute: 60  # Default requests per minute
+  burst: 20             # Default burst size
+
+paths:
+  /login:
+    requests_per_minute: 10  # Override for /login path
+    burst: 5
+  /api:
+    requests_per_minute: 120 # Override for /api path
+    burst: 40
+
+whitelist:
+  - 192.168.1.10        # IP Address
+  - 192.168.1.11/32    # CIDR notation
+  - 2001:0db8::/32  # IPv6 network
