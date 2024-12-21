@@ -8,6 +8,10 @@ on:
 jobs:
   generate_rate_limits:
     runs-on: ubuntu-latest
+    
+    env:
+       PYTHON_VERSION: 3.11 # Define a variable for the Python version
+       CONFIG_FILE: config.yaml # Define a variable for the config file
 
     steps:
       - name: Checkout code
@@ -16,27 +20,31 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: 3.9
+          python-version: ${{ env.PYTHON_VERSION }} # Use the environment variable
 
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Generate Caddy rate limit config
-        run: python ratelimit2caddy.py > rate_limit_rules/caddy/caddy_rate_limit.conf
+      - name: Generate Rate Limit Configs
+        run: |
+          python ratelimit2caddy.py > rate_limit_rules/caddy/caddy_rate_limit.conf
+          python ratelimit2nginx.py > rate_limit_rules/nginx/nginx_rate_limit.conf
+          python ratelimit2apache.py > rate_limit_rules/apache/apache_rate_limit.conf
+          python ratelimit2traefik.py > rate_limit_rules/traefik/traefik_rate_limit.conf
+          python ratelimit2haproxy.py > rate_limit_rules/haproxy/haproxy_rate_limit.conf
 
-      - name: Generate Nginx rate limit config
-        run: python ratelimit2nginx.py > rate_limit_rules/nginx/nginx_rate_limit.conf
+      - name: Check for changes
+        id: check_changes
+        run: |
+          if [[ $(git status --porcelain | wc -l) -gt 0 ]]; then
+             echo "::set-output name=has_changes::true"
+          else
+             echo "::set-output name=has_changes::false"
+          fi
 
-      - name: Generate Apache rate limit config
-        run: python ratelimit2apache.py > rate_limit_rules/apache/apache_rate_limit.conf
-
-      - name: Generate Traefik rate limit config
-        run: python ratelimit2traefik.py > rate_limit_rules/traefik/traefik_rate_limit.conf
-
-      - name: Generate Haproxy rate limit config
-        run: python ratelimit2haproxy.py > rate_limit_rules/haproxy/haproxy_rate_limit.conf
 
       - name: Commit and push changes
+        if: steps.check_changes.outputs.has_changes == 'true'
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
           commit_message: "Update rate limit rules"
