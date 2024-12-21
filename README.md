@@ -103,12 +103,11 @@ rate-limit-patterns/
 ### 2. Generation
 
 *   The `ratelimit.py` script loads and validates the configurations from `config.yaml`.
-*   The `ratelimit2*.py` scripts generate the platform-specific rate limiting configurations using the loaded config.
-   * `ratelimit2caddy.py` generates Caddy configuration
-   * `ratelimit2nginx.py` generates Nginx configuration
-   * `ratelimit2apache.py` generates Apache ModSecurity configuration
-   * `ratelimit2traefik.py` generates Traefik configuration
-   * `ratelimit2haproxy.py` generates HAProxy configuration
+* `ratelimit2caddy.py` generates Caddy configuration
+* `ratelimit2nginx.py` generates Nginx configuration
+* `ratelimit2apache.py` generates Apache ModSecurity configuration
+* `ratelimit2traefik.py` generates Traefik configuration
+* `ratelimit2haproxy.py` generates HAProxy configuration
 
 ### 3. Automation
 
@@ -119,7 +118,7 @@ rate-limit-patterns/
 
 1.  **Clone the Repository:**
     ```bash
-    git clone https://github.com/your-username/rate-limit-patterns.git
+    git clone https://github.com/fabriziosalmi/rate-limit-patterns.git
     cd rate-limit-patterns
     ```
 
