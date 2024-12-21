@@ -1,17 +1,51 @@
 # config.yaml
-global:
-  requests_per_minute: 60  # Default requests per minute
-  burst: 20             # Default burst size
 
+# Global Rate Limit Settings
+global:
+  enabled: true        # Enable/Disable global rate limiting
+  requests_per_minute: 60  # Default requests allowed per minute
+  burst: 20             # Default maximum burst size
+  window: 1m            # Time window for rate limiting (e.g., 1m, 5s, 30s)
+  limit_by: ip          # Limit requests by: ip, user_agent, or header_name (string)
+  # limit_by_header: custom_header #If limit_by is header, specify the header name
+
+# Path-Specific Rate Limit Settings
 paths:
   /login:
+    enabled: true
     requests_per_minute: 10  # Override for /login path
     burst: 5
+    window: 1m
+    limit_by: ip
   /api:
+    enabled: true
     requests_per_minute: 120 # Override for /api path
     burst: 40
+    window: 1m
+    limit_by: ip
+  '/search/(.*)': #Example of regex based path matching
+    enabled: true
+    requests_per_minute: 100
+    burst: 20
+    window: 1m
+    limit_by: ip
 
+# Whitelisting (IP Addresses or Networks)
 whitelist:
-  - 192.168.1.10        # IP Address
-  - 192.168.1.11/32    # CIDR notation
-  - 2001:0db8::/32  # IPv6 network
+  enabled: false #Enable whitelist feature
+  ips:
+    - 192.168.1.10        # Single IP Address
+    - 192.168.1.11/32    # CIDR Notation
+    - 2001:0db8::/32      # IPv6 Network
+
+# Blacklisting (IP Addresses or Networks)
+blacklist:
+  enabled: false #Enable blackist feature
+  ips:
+    - 192.168.1.20        # Single IP Address
+    - 192.168.1.22/32     # CIDR Notation
+
+# Advanced Options
+advanced:
+  log_level: info #Set logging level for rate limit messages: debug, info, warning, error
+  # other future options
