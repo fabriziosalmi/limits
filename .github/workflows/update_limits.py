@@ -27,7 +27,6 @@ jobs:
 
       - name: Generate Rate Limit Configs
         run: |
-          python ratelimit2caddy.py > rate_limit_rules/caddy/caddy_rate_limit.conf
           python ratelimit2nginx.py > rate_limit_rules/nginx/nginx_rate_limit.conf
           python ratelimit2apache.py > rate_limit_rules/apache/apache_rate_limit.conf
           python ratelimit2traefik.py > rate_limit_rules/traefik/traefik_rate_limit.conf
