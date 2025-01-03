@@ -4,7 +4,7 @@
 
 ## 📌 Project Highlights
 
-*   **⚙️ Multi-Web Server Support:** Generates rate limiting configurations for Apache (ModSecurity), Nginx, Caddy, Traefik, and HAProxy.
+*   **⚙️ Multi-Web Server Support:** Generates rate limiting configurations for Apache (ModSecurity), Nginx, Traefik, and HAProxy.
 *   **⏱️ Centralized Configuration:** Uses a single `config.yaml` file to define global and path-specific rate limits, as well as IP whitelisting/blacklisting.
 *   **🔄 Automated Updates:** GitHub Actions automatically fetch the latest configuration and generate new rules daily.
 *   **🛡️ Flexible Rate Limiting:** Supports limiting by IP address, User-Agent, or custom headers.
@@ -14,29 +14,28 @@
 ## 🌐 Supported Web Servers
 
 *   🔵 **Nginx**
-*   🟢 **Caddy**
 *   🟠 **Apache** (ModSecurity)
 *   🟣 **Traefik**
 *   🔴 **HAProxy**
+
+> [!NOTE]
+> If you use Caddy please check the [caddy-waf](https://github.com/fabriziosalmi/caddy-waf) project.
 
 ## 📂 Project Structure
 
 ```
 limits/
 ├── rate_limit_rules/       # 🔧 Generated rate limit config files
-│   ├── caddy/              # Caddy rate limit configs
 │   ├── nginx/              # Nginx rate limit configs
 │   ├── apache/             # Apache rate limit configs (ModSecurity)
 │   ├── traefik/            # Traefik rate limit configs
 │   └── haproxy/            # HAProxy rate limit configs
 │
 │── import_apache_rate_limit.py
-│── import_caddy_rate_limit.py
 │── import_haproxy_rate_limit.py
 │── import_nginx_rate_limit.py
 │── import_traefik_rate_limit.py
 ├── ratelimit.py           # ⚙️ Main Script to fetch rate limits config
-├── ratelimit2caddy.py      # 🔄 Convert rate limit config to Caddy
 ├── ratelimit2nginx.py      # 🔄 Convert rate limit config to Nginx
 ├── ratelimit2apache.py     # 🔄 Convert rate limit config to Apache ModSecurity
 ├── ratelimit2traefik.py    # 🔄 Convert rate limit config to Traefik
@@ -103,7 +102,6 @@ limits/
 ### 2. Generation
 
 *   The `ratelimit.py` script loads and validates the configurations from `config.yaml`.
-* `ratelimit2caddy.py` generates Caddy configuration
 * `ratelimit2nginx.py` generates Nginx configuration
 * `ratelimit2apache.py` generates Apache ModSecurity configuration
 * `ratelimit2traefik.py` generates Traefik configuration
@@ -146,16 +144,8 @@ limits/
       ...
    }
   ```
-### 2. Caddy Rate Limit Integration
- * Copy the `rate_limit_rules/caddy/caddy_rate_limit.conf` to your server.
- * Include the configuration in your caddyfile:
-  ```caddyfile
-  {
-    include /path/to/caddy_rate_limit.conf
-    ...
-  }
-  ```
-### 3. Apache Rate Limit Integration
+
+### 2. Apache Rate Limit Integration
   * Copy `rate_limit_rules/apache/apache_rate_limit.conf` to your server.
   * Include the configuration in your apache virtualhost configuration file or inside a `.htaccess` file.
 
@@ -167,7 +157,7 @@ limits/
   </VirtualHost>
   ```
 
-### 4. Traefik Rate Limit Integration
+### 3. Traefik Rate Limit Integration
    * Copy the content of `rate_limit_rules/traefik/traefik_rate_limit.conf` to your traefik configuration file (`traefik.yml`)
 
      ```toml
@@ -181,7 +171,7 @@ limits/
 
      ...
      ```
-### 5. Haproxy Rate Limit Integration
+### 4. Haproxy Rate Limit Integration
     *   Copy `rate_limit_rules/haproxy/haproxy_rate_limit.conf` to your server.
     *   Include the configuration in your HAProxy configuration file (`haproxy.cfg`)
   ```
@@ -215,7 +205,6 @@ See the `LICENSE` file for details.
 ## 🌐 Resources
 
 *   [Nginx Rate Limiting](https://docs.nginx.com/nginx/admin-guide/security/rate-limiting/)
-*   [Caddy Rate Limiting](https://caddyserver.com/docs/caddyfile/directives/rate_limit)
 *   [Apache mod_ratelimit](https://httpd.apache.org/docs/2.4/mod/mod_ratelimit.html)
 *   [Traefik Rate Limiting](https://doc.traefik.io/traefik/middlewares/http/ratelimit/)
 *   [HAProxy Rate Limiting](https://www.haproxy.com/blog/rate-limiting-with-haproxy/)
