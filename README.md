@@ -30,20 +30,21 @@ limits/
 │   ├── apache/             # Apache rate limit configs (ModSecurity)
 │   ├── traefik/            # Traefik rate limit configs
 │   └── haproxy/            # HAProxy rate limit configs
-│
-│── import_apache_rate_limit.py
-│── import_haproxy_rate_limit.py
-│── import_nginx_rate_limit.py
-│── import_traefik_rate_limit.py
-├── ratelimit.py           # ⚙️ Main Script to fetch rate limits config
+├── import_apache_rate_limit.py
+├── import_haproxy_rate_limit.py
+├── import_nginx_rate_limit.py
+├── import_traefik_rate_limit.py
+├── ratelimit.py           # ⚙️ Main Script to load and validate rate limits config
 ├── ratelimit2nginx.py      # 🔄 Convert rate limit config to Nginx
 ├── ratelimit2apache.py     # 🔄 Convert rate limit config to Apache ModSecurity
 ├── ratelimit2traefik.py    # 🔄 Convert rate limit config to Traefik
 ├── ratelimit2haproxy.py   # 🔄 Convert rate limit config to HAProxy
 ├── config.yaml             # 📝 Configuration file to define rate limits
 ├── requirements.txt        # 📄 Required dependencies
+├── CONTRIBUTING.md         # 🤝 Contribution guidelines
+├── CHANGELOG.md            # 📋 Project changelog
 └── .github/workflows/      # 🤖 GitHub Actions for automation
-    └── update_rules.yml
+    └── update_limits.py
 ```
 
 ## 🛠️ How It Works
@@ -102,10 +103,10 @@ limits/
 ### 2. Generation
 
 *   The `ratelimit.py` script loads and validates the configurations from `config.yaml`.
-* `ratelimit2nginx.py` generates Nginx configuration
-* `ratelimit2apache.py` generates Apache ModSecurity configuration
-* `ratelimit2traefik.py` generates Traefik configuration
-* `ratelimit2haproxy.py` generates HAProxy configuration
+*   `ratelimit2nginx.py` generates Nginx configuration
+*   `ratelimit2apache.py` generates Apache ModSecurity configuration
+*   `ratelimit2traefik.py` generates Traefik configuration
+*   `ratelimit2haproxy.py` generates HAProxy configuration
 
 ### 3. Automation
 
@@ -114,19 +115,35 @@ limits/
 
 ## ⚙️ Installation
 
+### Prerequisites
+
+Before you begin, ensure you have the following installed on your system:
+
+*   **Python 3.7+**: Required to run the rate limit generation scripts
+*   **pip**: Python package manager (usually comes with Python)
+*   **Git**: For cloning the repository
+*   **A supported web server**: At least one of the following:
+    *   Nginx
+    *   Apache with ModSecurity
+    *   Traefik
+    *   HAProxy
+
+### Installation Steps
+
 1.  **Clone the Repository:**
     ```bash
-    git clone https://github.com/fabriziosalmi/rate-limit-patterns.git
-    cd rate-limit-patterns
+    git clone https://github.com/fabriziosalmi/limits.git
+    cd limits
     ```
 
-2.  **Install Dependencies:**
+2.  **Install Python Dependencies:**
     ```bash
     pip install -r requirements.txt
     ```
 
 3.  **Configure `config.yaml`:**
-     * Adapt the `config.yaml` with your specific requirements.
+     * Edit the `config.yaml` file to define your specific rate limiting requirements.
+     * Configure global settings, path-specific rules, and whitelist/blacklist as needed.
 
 ## 🚀 Usage (Web Server Integration)
 
@@ -160,7 +177,7 @@ limits/
 ### 3. Traefik Rate Limit Integration
    * Copy the content of `rate_limit_rules/traefik/traefik_rate_limit.conf` to your traefik configuration file (`traefik.yml`)
 
-     ```toml
+     ```yaml
      # traefik.yml
      ...
      http:
@@ -180,18 +197,185 @@ limits/
     ...
   ```
 
+## 🧪 Testing Your Configuration
+
+Before deploying to production, it's important to test your rate limit configuration:
+
+### 1. Validate Configuration Files
+
+**For Nginx:**
+```bash
+nginx -t
+```
+
+**For Apache:**
+```bash
+apachectl configtest
+```
+
+**For HAProxy:**
+```bash
+haproxy -c -f /etc/haproxy/haproxy.cfg
+```
+
+### 2. Test Rate Limiting Locally
+
+You can use tools like `curl` or `ab` (Apache Bench) to test rate limiting:
+
+```bash
+# Send multiple rapid requests to test rate limiting
+for i in {1..100}; do curl -s http://localhost/api; done
+
+# Use Apache Bench for load testing
+ab -n 100 -c 10 http://localhost/api
+```
+
+### 3. Monitor Logs
+
+Check your web server logs to verify that rate limiting is working:
+
+**Nginx:**
+```bash
+tail -f /var/log/nginx/error.log
+```
+
+**Apache:**
+```bash
+tail -f /var/log/apache2/error.log
+```
+
+**HAProxy:**
+```bash
+tail -f /var/log/haproxy.log
+```
+
 ## 🤖 Automation (GitHub Workflow)
 
 *   **Daily Updates:** GitHub Actions fetches new rate limit configurations daily at midnight UTC.
 *   **Auto Deployment:** Pushes new configuration files directly to `rate_limit_rules/`.
 *   **Manual Trigger:**  Updates can also be triggered manually.
 
+## 🔧 Troubleshooting
+
+### Common Issues
+
+**Issue: "Error: config file not found"**
+*   **Solution:** Ensure `config.yaml` exists in the root directory of the project.
+
+**Issue: "Error parsing YAML"**
+*   **Solution:** Check that your `config.yaml` file has valid YAML syntax. Use a YAML validator if needed.
+
+**Issue: Rate limits not working after configuration**
+*   **Solution:** 
+    *   Verify that the configuration file is correctly included in your web server's configuration.
+    *   Restart your web server after applying the configuration.
+    *   Check your web server's error logs for any configuration errors.
+
+**Issue: Generated configuration files are empty**
+*   **Solution:** Run the generation scripts manually to check for errors:
+    ```bash
+    python ratelimit2nginx.py
+    python ratelimit2apache.py
+    python ratelimit2traefik.py
+    python ratelimit2haproxy.py
+    ```
+
+**Issue: Import scripts fail with "environment variable not set"**
+*   **Solution:** Set the appropriate environment variable before running the import script:
+    ```bash
+    export NGINX_RATE_LIMIT_FILE=/path/to/nginx/conf.d/rate_limit.conf
+    python import_nginx_rate_limit.py
+    ```
+
 ## 🤝 Contributing
 
-*   Fork the repository.
-*   Create a feature branch (`feature/new-feature`).
-*   Commit and push changes.
-*   Open a Pull Request.
+We welcome contributions from the community! Here's how you can help:
+
+1.  **Fork the Repository:** Click the "Fork" button at the top right of the repository page.
+2.  **Clone Your Fork:**
+    ```bash
+    git clone https://github.com/YOUR_USERNAME/limits.git
+    cd limits
+    ```
+3.  **Create a Feature Branch:** Use a descriptive name for your branch.
+    ```bash
+    git checkout -b feature/your-feature-name
+    ```
+4.  **Make Your Changes:** Implement your feature or bug fix.
+5.  **Test Your Changes:** Ensure the scripts run correctly:
+    ```bash
+    python ratelimit.py
+    python ratelimit2nginx.py
+    python ratelimit2apache.py
+    python ratelimit2traefik.py
+    python ratelimit2haproxy.py
+    ```
+6.  **Commit Your Changes:** Write clear, concise commit messages.
+    ```bash
+    git add .
+    git commit -m "feat: add new feature description"
+    ```
+7.  **Push to Your Fork:**
+    ```bash
+    git push origin feature/your-feature-name
+    ```
+8.  **Open a Pull Request:** Go to the original repository and click "New Pull Request".
+
+### Contribution Guidelines
+
+*   Follow the existing code style and conventions.
+*   Add comments to explain complex logic.
+*   Update documentation if you change functionality.
+*   Test your changes thoroughly before submitting.
+*   Keep pull requests focused on a single feature or fix.
+
+For more detailed contribution guidelines, see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## 🔐 Security Considerations
+
+When implementing rate limiting, keep these security best practices in mind:
+
+### 1. Don't Rely Solely on Rate Limiting
+
+Rate limiting is one layer of defense. Implement additional security measures:
+*   Input validation and sanitization
+*   Authentication and authorization
+*   HTTPS/TLS encryption
+*   Web Application Firewall (WAF)
+*   Regular security updates
+
+### 2. Configure Appropriate Limits
+
+*   **Too restrictive**: May block legitimate users
+*   **Too lenient**: May not prevent abuse effectively
+*   Monitor your traffic patterns and adjust accordingly
+
+### 3. Whitelist Trusted IPs Carefully
+
+*   Only whitelist IPs you fully trust (e.g., monitoring services, trusted partners)
+*   Regularly review and update your whitelist
+*   Use CIDR notation to specify IP ranges precisely
+
+### 4. Protect Sensitive Endpoints
+
+Apply stricter rate limits to sensitive endpoints:
+*   Login pages (`/login`, `/auth`)
+*   API endpoints (`/api/*`)
+*   Password reset (`/reset-password`)
+*   Search functionality (`/search`)
+
+### 5. Monitor and Log
+
+*   Enable logging to track rate limit violations
+*   Set up alerts for unusual patterns
+*   Regularly review logs for potential attacks
+
+### 6. Consider Distributed Environments
+
+If running multiple server instances:
+*   Use a shared storage for rate limit counters (Redis, Memcached)
+*   Ensure rate limits are synchronized across all instances
+*   Consider using a centralized rate limiting solution
 
 ## 📄 License
 
