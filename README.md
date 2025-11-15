@@ -114,19 +114,35 @@ limits/
 
 ## ⚙️ Installation
 
+### Prerequisites
+
+Before you begin, ensure you have the following installed on your system:
+
+*   **Python 3.7+**: Required to run the rate limit generation scripts
+*   **pip**: Python package manager (usually comes with Python)
+*   **Git**: For cloning the repository
+*   **A supported web server**: At least one of the following:
+    *   Nginx
+    *   Apache with ModSecurity
+    *   Traefik
+    *   HAProxy
+
+### Installation Steps
+
 1.  **Clone the Repository:**
     ```bash
-    git clone https://github.com/fabriziosalmi/rate-limit-patterns.git
-    cd rate-limit-patterns
+    git clone https://github.com/fabriziosalmi/limits.git
+    cd limits
     ```
 
-2.  **Install Dependencies:**
+2.  **Install Python Dependencies:**
     ```bash
     pip install -r requirements.txt
     ```
 
 3.  **Configure `config.yaml`:**
-     * Adapt the `config.yaml` with your specific requirements.
+     * Edit the `config.yaml` file to define your specific rate limiting requirements.
+     * Configure global settings, path-specific rules, and whitelist/blacklist as needed.
 
 ## 🚀 Usage (Web Server Integration)
 
@@ -160,7 +176,7 @@ limits/
 ### 3. Traefik Rate Limit Integration
    * Copy the content of `rate_limit_rules/traefik/traefik_rate_limit.conf` to your traefik configuration file (`traefik.yml`)
 
-     ```toml
+     ```yaml
      # traefik.yml
      ...
      http:
@@ -186,12 +202,79 @@ limits/
 *   **Auto Deployment:** Pushes new configuration files directly to `rate_limit_rules/`.
 *   **Manual Trigger:**  Updates can also be triggered manually.
 
+## 🔧 Troubleshooting
+
+### Common Issues
+
+**Issue: "Error: config file not found"**
+*   **Solution:** Ensure `config.yaml` exists in the root directory of the project.
+
+**Issue: "Error parsing YAML"**
+*   **Solution:** Check that your `config.yaml` file has valid YAML syntax. Use a YAML validator if needed.
+
+**Issue: Rate limits not working after configuration**
+*   **Solution:** 
+    *   Verify that the configuration file is correctly included in your web server's configuration.
+    *   Restart your web server after applying the configuration.
+    *   Check your web server's error logs for any configuration errors.
+
+**Issue: Generated configuration files are empty**
+*   **Solution:** Run the generation scripts manually to check for errors:
+    ```bash
+    python ratelimit2nginx.py
+    python ratelimit2apache.py
+    python ratelimit2traefik.py
+    python ratelimit2haproxy.py
+    ```
+
+**Issue: Import scripts fail with "environment variable not set"**
+*   **Solution:** Set the appropriate environment variable before running the import script:
+    ```bash
+    export NGINX_RATE_LIMIT_FILE=/path/to/nginx/conf.d/rate_limit.conf
+    python import_nginx_rate_limit.py
+    ```
+
 ## 🤝 Contributing
 
-*   Fork the repository.
-*   Create a feature branch (`feature/new-feature`).
-*   Commit and push changes.
-*   Open a Pull Request.
+We welcome contributions from the community! Here's how you can help:
+
+1.  **Fork the Repository:** Click the "Fork" button at the top right of the repository page.
+2.  **Clone Your Fork:**
+    ```bash
+    git clone https://github.com/YOUR_USERNAME/limits.git
+    cd limits
+    ```
+3.  **Create a Feature Branch:** Use a descriptive name for your branch.
+    ```bash
+    git checkout -b feature/your-feature-name
+    ```
+4.  **Make Your Changes:** Implement your feature or bug fix.
+5.  **Test Your Changes:** Ensure the scripts run correctly:
+    ```bash
+    python ratelimit.py
+    python ratelimit2nginx.py
+    python ratelimit2apache.py
+    python ratelimit2traefik.py
+    python ratelimit2haproxy.py
+    ```
+6.  **Commit Your Changes:** Write clear, concise commit messages.
+    ```bash
+    git add .
+    git commit -m "feat: add new feature description"
+    ```
+7.  **Push to Your Fork:**
+    ```bash
+    git push origin feature/your-feature-name
+    ```
+8.  **Open a Pull Request:** Go to the original repository and click "New Pull Request".
+
+### Contribution Guidelines
+
+*   Follow the existing code style and conventions.
+*   Add comments to explain complex logic.
+*   Update documentation if you change functionality.
+*   Test your changes thoroughly before submitting.
+*   Keep pull requests focused on a single feature or fix.
 
 ## 📄 License
 
