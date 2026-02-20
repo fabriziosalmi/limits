@@ -1,23 +1,22 @@
-# Apache ModSecurity Rate Limit Configuration
+# Apache mod_ratelimit Configuration
 
-This directory contains the automatically generated Apache ModSecurity rate limit configuration file.
+This directory contains the automatically generated Apache rate limit configuration file.
 
 ## Generated File
 
-*   **`apache_rate_limit.conf`**: The main Apache ModSecurity rate limit configuration file generated from `config.yaml`.
+*   **`apache_rate_limit.conf`**: The Apache rate limit configuration file generated from `config.yaml` using Apache's `mod_ratelimit` module.
 
 ## Integration
 
 To integrate this configuration with your Apache server:
 
-1.  **Ensure ModSecurity is installed and enabled:**
+1.  **Ensure mod_ratelimit is installed and enabled:**
     ```bash
     # For Debian/Ubuntu
-    sudo apt-get install libapache2-mod-security2
-    sudo a2enmod security2
+    sudo a2enmod ratelimit
     
     # For RHEL/CentOS
-    sudo yum install mod_security
+    # mod_ratelimit is included in the httpd package
     ```
 
 2.  **Copy the configuration file to your server:**
@@ -50,17 +49,16 @@ To integrate this configuration with your Apache server:
 
 The generated file includes:
 
-*   **ModSecurity rules**: Custom rules for rate limiting based on IP addresses
-*   **Path-specific rules**: Different rate limits for different URL paths
-*   **IP whitelist/blacklist**: Allow or deny specific IP addresses
+*   **mod_ratelimit directives**: `RateLimit` directives for rate limiting by IP, User-Agent, or header
+*   **Path-specific rules**: Different rate limits for different URL paths via `<Location>` blocks
+*   **IP whitelist/blacklist**: `<Files *>` blocks with `<RequireAll>` and `Require not ip` directives
 
 ## Troubleshooting
 
-*   **ModSecurity not loading**: Check Apache error logs and ensure ModSecurity module is properly installed.
-*   **Rules not applying**: Verify that ModSecurity engine is enabled (`SecRuleEngine On`).
+*   **mod_ratelimit not loading**: Check Apache error logs and ensure the `ratelimit` module is enabled.
+*   **Rules not applying**: Verify that the `<IfModule mod_ratelimit.c>` block is being parsed correctly.
 *   **Too many false positives**: Adjust the rate limit thresholds in `config.yaml`.
 
 ## Resources
 
-*   [Apache ModSecurity Documentation](https://github.com/SpiderLabs/ModSecurity)
-*   [ModSecurity Reference Manual](https://github.com/SpiderLabs/ModSecurity/wiki/Reference-Manual-(v2.x))
+*   [Apache mod_ratelimit Documentation](https://httpd.apache.org/docs/2.4/mod/mod_ratelimit.html)

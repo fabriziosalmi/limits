@@ -160,4 +160,4 @@ If you have questions about contributing, feel free to:
 *   Open an issue with the `question` label
 *   Reach out to the maintainers
 
-Thank you for contributing to Limits! 🎉
+Thank you for contributing to Limits!
