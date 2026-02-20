@@ -1,53 +1,52 @@
-# 🔒 Limits: Automated Rate Limiting for Web Servers
+# Limits
 
-🚀 Protect your web servers against abuse and ensure optimal performance with automated rate limiting configurations. This project generates and manages rate limit rules for multiple web server platforms, making it easy to implement robust protection against excessive requests.
+Python scripts that generate rate limiting configuration files for common web servers from a single `config.yaml` file. A GitHub Actions workflow runs these scripts daily and commits updated configs to the repository.
 
-## 📌 Project Highlights
+## Features
 
-*   **⚙️ Multi-Web Server Support:** Generates rate limiting configurations for Apache (ModSecurity), Nginx, Traefik, and HAProxy.
-*   **⏱️ Centralized Configuration:** Uses a single `config.yaml` file to define global and path-specific rate limits, as well as IP whitelisting/blacklisting.
-*   **🔄 Automated Updates:** GitHub Actions automatically fetch the latest configuration and generate new rules daily.
-*   **🛡️ Flexible Rate Limiting:** Supports limiting by IP address, User-Agent, or custom headers.
-*   **✅ Easy Integration:** Clear instructions and example configurations are provided to quickly integrate rate limiting into your servers.
-*   **🎛️ Granular Control:** Configure rate limits at both global and path-specific levels for detailed control.
+*   **Multi-Web Server Support:** Generates rate limiting configurations for Apache (mod_ratelimit), Nginx, Traefik, and HAProxy.
+*   **Centralized Configuration:** Uses a single `config.yaml` file to define global and path-specific rate limits, as well as IP whitelisting/blacklisting.
+*   **Automated Config Generation:** GitHub Actions runs the generation scripts daily and commits the resulting files to `rate_limit_rules/`.
+*   **Limiting Strategies:** Supports limiting by IP address, User-Agent, or a named request header.
+*   **Path-Specific Overrides:** Configure different rate limits for individual URL paths in addition to a global default.
 
-## 🌐 Supported Web Servers
+## Supported Web Servers
 
-*   🔵 **Nginx**
-*   🟠 **Apache** (ModSecurity)
-*   🟣 **Traefik**
-*   🔴 **HAProxy**
+*   **Nginx**
+*   **Apache** (mod_ratelimit)
+*   **Traefik**
+*   **HAProxy**
 
 > [!NOTE]
 > If you use Caddy please check the [caddy-waf](https://github.com/fabriziosalmi/caddy-waf) project.
 
-## 📂 Project Structure
+## Project Structure
 
 ```
 limits/
-├── rate_limit_rules/       # 🔧 Generated rate limit config files
+├── rate_limit_rules/       # Generated rate limit config files
 │   ├── nginx/              # Nginx rate limit configs
-│   ├── apache/             # Apache rate limit configs (ModSecurity)
+│   ├── apache/             # Apache rate limit configs (mod_ratelimit)
 │   ├── traefik/            # Traefik rate limit configs
 │   └── haproxy/            # HAProxy rate limit configs
 ├── import_apache_rate_limit.py
 ├── import_haproxy_rate_limit.py
 ├── import_nginx_rate_limit.py
 ├── import_traefik_rate_limit.py
-├── ratelimit.py           # ⚙️ Main Script to load and validate rate limits config
-├── ratelimit2nginx.py      # 🔄 Convert rate limit config to Nginx
-├── ratelimit2apache.py     # 🔄 Convert rate limit config to Apache ModSecurity
-├── ratelimit2traefik.py    # 🔄 Convert rate limit config to Traefik
-├── ratelimit2haproxy.py   # 🔄 Convert rate limit config to HAProxy
-├── config.yaml             # 📝 Configuration file to define rate limits
-├── requirements.txt        # 📄 Required dependencies
-├── CONTRIBUTING.md         # 🤝 Contribution guidelines
-├── CHANGELOG.md            # 📋 Project changelog
-└── .github/workflows/      # 🤖 GitHub Actions for automation
+├── ratelimit.py            # Loads and validates config.yaml
+├── ratelimit2nginx.py      # Generates Nginx config
+├── ratelimit2apache.py     # Generates Apache mod_ratelimit config
+├── ratelimit2traefik.py    # Generates Traefik config
+├── ratelimit2haproxy.py    # Generates HAProxy config
+├── config.yaml             # Rate limit definitions
+├── requirements.txt        # Python dependencies
+├── CONTRIBUTING.md         # Contribution guidelines
+├── CHANGELOG.md            # Project changelog
+└── .github/workflows/      # GitHub Actions workflow for automated generation
     └── update_limits.py
 ```
 
-## 🛠️ How It Works
+## How It Works
 
 ### 1. Configuration
 
@@ -104,16 +103,16 @@ limits/
 
 *   The `ratelimit.py` script loads and validates the configurations from `config.yaml`.
 *   `ratelimit2nginx.py` generates Nginx configuration
-*   `ratelimit2apache.py` generates Apache ModSecurity configuration
+*   `ratelimit2apache.py` generates Apache mod_ratelimit configuration
 *   `ratelimit2traefik.py` generates Traefik configuration
 *   `ratelimit2haproxy.py` generates HAProxy configuration
 
 ### 3. Automation
 
-*   GitHub Actions automatically generate rate limiting configurations daily.
+*   The GitHub Actions workflow automatically generates rate limiting configurations daily.
 *   Modified configuration files are automatically committed and pushed to the repository.
 
-## ⚙️ Installation
+## Installation
 
 ### Prerequisites
 
@@ -124,7 +123,7 @@ Before you begin, ensure you have the following installed on your system:
 *   **Git**: For cloning the repository
 *   **A supported web server**: At least one of the following:
     *   Nginx
-    *   Apache with ModSecurity
+    *   Apache with mod_ratelimit
     *   Traefik
     *   HAProxy
 
@@ -145,7 +144,7 @@ Before you begin, ensure you have the following installed on your system:
      * Edit the `config.yaml` file to define your specific rate limiting requirements.
      * Configure global settings, path-specific rules, and whitelist/blacklist as needed.
 
-## 🚀 Usage (Web Server Integration)
+## Usage (Web Server Integration)
 
 1.  **Generate Configuration:**
    *   The rate limit configuration files will be generated automatically by github actions.
@@ -197,7 +196,7 @@ Before you begin, ensure you have the following installed on your system:
     ...
   ```
 
-## 🧪 Testing Your Configuration
+## Testing Your Configuration
 
 Before deploying to production, it's important to test your rate limit configuration:
 
@@ -249,13 +248,12 @@ tail -f /var/log/apache2/error.log
 tail -f /var/log/haproxy.log
 ```
 
-## 🤖 Automation (GitHub Workflow)
+## Automation (GitHub Workflow)
 
-*   **Daily Updates:** GitHub Actions fetches new rate limit configurations daily at midnight UTC.
-*   **Auto Deployment:** Pushes new configuration files directly to `rate_limit_rules/`.
-*   **Manual Trigger:**  Updates can also be triggered manually.
+*   **Daily Generation:** GitHub Actions runs the generation scripts daily at midnight UTC and commits any changed files to `rate_limit_rules/`.
+*   **Manual Trigger:** The workflow can also be triggered manually via `workflow_dispatch`.
 
-## 🔧 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
@@ -287,9 +285,9 @@ tail -f /var/log/haproxy.log
     python import_nginx_rate_limit.py
     ```
 
-## 🤝 Contributing
+## Contributing
 
-We welcome contributions from the community! Here's how you can help:
+Contributions are welcome. Here's the typical workflow:
 
 1.  **Fork the Repository:** Click the "Fork" button at the top right of the repository page.
 2.  **Clone Your Fork:**
@@ -331,7 +329,7 @@ We welcome contributions from the community! Here's how you can help:
 
 For more detailed contribution guidelines, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
-## 🔐 Security Considerations
+## Security Considerations
 
 When implementing rate limiting, keep these security best practices in mind:
 
@@ -377,16 +375,16 @@ If running multiple server instances:
 *   Ensure rate limits are synchronized across all instances
 *   Consider using a centralized rate limiting solution
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License.
 See the `LICENSE` file for details.
 
-## 📞 Need Help?
+## Need Help?
 
 *   Issues? Open a ticket in the Issues tab.
 
-## 🌐 Resources
+## Resources
 
 *   [Nginx Rate Limiting](https://docs.nginx.com/nginx/admin-guide/security/rate-limiting/)
 *   [Apache mod_ratelimit](https://httpd.apache.org/docs/2.4/mod/mod_ratelimit.html)
