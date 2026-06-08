@@ -27,6 +27,11 @@ def import_haproxy_rate_limit() -> None:
         with open(SOURCE_FILE, 'r') as source:
             config_content = source.read()
 
+        # Guard against empty source content to prevent config corruption
+        if not config_content.strip():
+            logger.warning("Source file is empty; skipping import.")
+            return
+
         with open(dest_file, 'r+') as dest:
             content = dest.read()
             # Regex to find the first frontend block, or add one if not present
