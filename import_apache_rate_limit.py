@@ -3,6 +3,7 @@ import os
 import shutil
 import logging
 from typing import Optional
+from pathlib import Path
 
 # Constants
 SOURCE_FILE = 'rate_limit_rules/apache/apache_rate_limit.conf'
@@ -24,14 +25,24 @@ def import_apache_rate_limit() -> None:
         return
 
     try:
+        # Ensure the destination directory exists before attempting to copy
+        dest_path = Path(dest_file)
+        dest_dir = dest_path.parent
+        
+        if not dest_dir.exists():
+            logger.info(f"Creating destination directory: {dest_dir}")
+            dest_dir.mkdir(parents=True, exist_ok=True)
+
         shutil.copyfile(SOURCE_FILE, dest_file)
         logger.info(f"Successfully imported Apache rate limit configuration to {dest_file}")
-    except FileNotFoundError:
+    except FileNotFoundError as e:
         logger.error(f"Error: Source file not found: {SOURCE_FILE}")
-    except PermissionError:
+    except PermissionError as e:
         logger.error(f"Error: Permission denied while copying to {dest_file}")
+    except OSError as e:
+        logger.error(f"Error: Failed to create destination directory or copy file: {e}")
     except Exception as e:
-        logger.error(f"Error copying the file: {e}")
+        logger.error(f"Unexpected error copying the file: {e}")
 
 if __name__ == "__main__":
     import_apache_rate_limit()
