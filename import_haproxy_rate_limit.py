@@ -12,6 +12,17 @@ DEST_ENV_VAR = 'HAPROXY_RATE_LIMIT_FILE'
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+def indent_content(content: str, indent: str = '    ') -> str:
+    """Indent each non-empty line of content with the given indent string."""
+    lines = content.splitlines(keepends=True)
+    indented = []
+    for line in lines:
+        if line.strip():  # non-empty line
+            indented.append(indent + line)
+        else:
+            indented.append(line)
+    return ''.join(indented)
+
 def import_haproxy_rate_limit() -> None:
     """
     Imports the generated HAProxy rate limit configuration to the destination file.
@@ -38,9 +49,13 @@ def import_haproxy_rate_limit() -> None:
             match = re.search(r'frontend\s+(\w+)', content)
             if match:
                 start = match.start()
-                new_content = content[:start + 1] + '\n' + config_content + '\n' + content[start + 1:]
+                # Indent config content to match frontend block's context
+                indented_config = indent_content(config_content)
+                new_content = content[:start + len(match.group(0))] + '\n' + indented_config + '\n' + content[start + len(match.group(0)):]
             else:
-                new_content = content + '\nfrontend http-in\n' + config_content
+                # Add new frontend block with indented config
+                indented_config = indent_content(config_content)
+                new_content = content + '\nfrontend http-in\n' + indented_config
 
             dest.seek(0)
             dest.write(new_content)
