@@ -1,0 +1,47 @@
+name: Update Rate Limit Rules
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Run daily at midnight UTC
+  workflow_dispatch:     # Allow manual triggering
+
+# git-auto-commit-action pushes the regenerated configs back to the repo.
+# The default GITHUB_TOKEN on this repo is read-only, so write access must be
+# granted explicitly or the commit/push step fails.
+permissions:
+  contents: write
+
+jobs:
+  generate_rate_limits:
+    runs-on: ubuntu-latest
+
+    env:
+      PYTHON_VERSION: "3.11"    # Python version for the generator scripts
+      CONFIG_FILE: config.yaml  # Central rate-limit definitions read by the scripts
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Generate rate limit configs
+        run: |
+          python ratelimit2nginx.py  > rate_limit_rules/nginx/nginx_rate_limit.conf
+          python ratelimit2apache.py > rate_limit_rules/apache/apache_rate_limit.conf
+          python ratelimit2traefik.py > rate_limit_rules/traefik/traefik_rate_limit.conf
+          python ratelimit2haproxy.py > rate_limit_rules/haproxy/haproxy_rate_limit.conf
+
+      - name: Commit and push regenerated configs
+        # Native change detection: no-op (exits green) when nothing changed,
+        # commits only real diffs. Replaces the deprecated ::set-output:: guard.
+        uses: stefanzweifel/git-auto-commit-action@v7
+        with:
+          commit_message: "chore: update rate limit rules"
+          file_pattern: rate_limit_rules/*/*

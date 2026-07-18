@@ -22,3 +22,14 @@ env/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Secrets and credentials (never commit)
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+secrets.yaml
+secrets.yml
+credentials.json
