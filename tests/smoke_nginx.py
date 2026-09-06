@@ -101,15 +101,24 @@ def wrap(generated: str, workdir: Path) -> str:
     """
     Wraps the generated snippet in the smallest nginx.conf that will load it.
 
-    The pid and error log are pointed inside the work directory: `nginx -t`
-    opens both, and the packaged defaults (`/run/nginx.pid`, `/var/log/nginx`)
-    are not writable by an unprivileged user, which is how CI runs.
+    Every path nginx opens during `nginx -t` is pointed inside the work
+    directory. The packaged defaults live under /run and /var/log, which are not
+    writable by an unprivileged user, and nginx reports that as a failed
+    configuration test even when it has just said the syntax is fine.
     """
     return (
         f"pid {workdir}/nginx.pid;\n"
         f"error_log {workdir}/error.log;\n"
         "events { worker_connections 64; }\n"
-        f"http {{\n{generated}\n}}\n"
+        "http {\n"
+        "  access_log off;\n"
+        f"  client_body_temp_path {workdir}/client_body;\n"
+        f"  proxy_temp_path {workdir}/proxy;\n"
+        f"  fastcgi_temp_path {workdir}/fastcgi;\n"
+        f"  uwsgi_temp_path {workdir}/uwsgi;\n"
+        f"  scgi_temp_path {workdir}/scgi;\n"
+        f"{generated}\n"
+        "}\n"
     )
 
 
