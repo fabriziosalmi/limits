@@ -1,0 +1,64 @@
+# Validates generated configuration with the server it targets.
+#
+# The nginx generator emitted a rate unit nginx does not accept, including with
+# the shipped defaults, and nothing noticed for over a year (#6). Checking that
+# a file was produced is not a check; running `nginx -t` over it is.
+name: validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  nginx:
+    name: nginx accepts the generated configuration
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install nginx
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y nginx
+          nginx -v
+
+      - name: Validate the generated configuration
+        run: python3 tests/smoke_nginx.py
+
+      - name: Validate the committed configuration
+        run: |
+          # The daily workflow commits the generated files, so what is in the
+          # repository has to pass the same check as what the generator produces
+          # right now.
+          workdir="$(mktemp -d)"
+          {
+            # Every path nginx opens during -t goes inside the work directory:
+            # the packaged defaults under /run and /var/log are not writable by
+            # the unprivileged user CI runs as.
+            echo "pid $workdir/nginx.pid;"
+            echo "error_log $workdir/error.log;"
+            echo 'events { worker_connections 64; }'
+            echo 'http {'
+            echo '  access_log off;'
+            echo "  client_body_temp_path $workdir/client_body;"
+            echo "  proxy_temp_path $workdir/proxy;"
+            echo "  fastcgi_temp_path $workdir/fastcgi;"
+            echo "  uwsgi_temp_path $workdir/uwsgi;"
+            echo "  scgi_temp_path $workdir/scgi;"
+            cat rate_limit_rules/nginx/nginx_rate_limit.conf
+            echo '}'
+          } > "$workdir/nginx.conf"
+          nginx -t -c "$workdir/nginx.conf" -p "$workdir"

@@ -161,6 +161,37 @@ Before you begin, ensure you have the following installed on your system:
    }
   ```
 
+  * Check it before reloading: `nginx -t`.
+
+#### How the rate is expressed
+
+nginx accepts only two units in `limit_req_zone ... rate=`, `r/s` and `r/m`, and
+only a whole number of requests. So `requests_per_minute` and `window` are folded
+together into one of those: 10 requests per `1m` becomes `rate=10r/m`, 60 per
+`1m` becomes `rate=1r/s`, and 120 per `2h` becomes `rate=1r/m`. A comment above
+each zone records the values it came from.
+
+A rate below one request per minute cannot be expressed at all, and the generator
+refuses to emit it rather than producing something nginx rejects at reload. A rate
+that does not land on a whole number of requests per minute is rounded, with a
+warning naming both the requested and the emitted value.
+
+#### Keying by a header
+
+`limit_by: header_name` with `limit_by_header: X-API-Key` is written as
+`$http_x_api_key`: nginx exposes a header as `$http_` plus the name lowercased
+with each `-` replaced by `_`. Note that a request without that header has an
+empty key, and nginx does not account requests with an empty key, so those
+requests are not limited. Key on the address instead if that matters.
+
+#### Whitelisting
+
+A whitelisted address is exempted by giving its request an empty zone key: nginx
+does not account requests whose key is empty, so the limit does not apply to them
+and everything else about the request is untouched. The generator emits a `geo`
+block and a `map` per key, which is why a whitelist costs nothing at request time
+and does not need an `if`.
+
 ### 2. Apache Rate Limit Integration
   * Copy `rate_limit_rules/apache/apache_rate_limit.conf` to your server.
   * Include the configuration in your apache virtualhost configuration file or inside a `.htaccess` file.
