@@ -97,9 +97,20 @@ REJECTED = {
 }
 
 
-def wrap(generated: str) -> str:
-    """Wraps the generated snippet in the smallest nginx.conf that will load it."""
-    return f"events {{ worker_connections 64; }}\nhttp {{\n{generated}\n}}\n"
+def wrap(generated: str, workdir: Path) -> str:
+    """
+    Wraps the generated snippet in the smallest nginx.conf that will load it.
+
+    The pid and error log are pointed inside the work directory: `nginx -t`
+    opens both, and the packaged defaults (`/run/nginx.pid`, `/var/log/nginx`)
+    are not writable by an unprivileged user, which is how CI runs.
+    """
+    return (
+        f"pid {workdir}/nginx.pid;\n"
+        f"error_log {workdir}/error.log;\n"
+        "events { worker_connections 64; }\n"
+        f"http {{\n{generated}\n}}\n"
+    )
 
 
 def nginx_check(config_text: str, workdir: Path) -> tuple[bool, str]:
@@ -129,7 +140,7 @@ def main() -> int:
                 continue
 
             generated = ratelimit2nginx.generate_nginx_config(validated)
-            ok, message = nginx_check(wrap(generated), workdir)
+            ok, message = nginx_check(wrap(generated, workdir), workdir)
             if ok:
                 print(f"ok    {name}")
             else:

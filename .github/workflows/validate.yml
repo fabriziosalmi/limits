@@ -45,6 +45,10 @@ jobs:
           # right now.
           workdir="$(mktemp -d)"
           {
+            # nginx -t opens the pid file and the error log, and the packaged
+            # defaults are not writable by an unprivileged user.
+            echo "pid $workdir/nginx.pid;"
+            echo "error_log $workdir/error.log;"
             echo 'events { worker_connections 64; }'
             echo 'http {'
             cat rate_limit_rules/nginx/nginx_rate_limit.conf
