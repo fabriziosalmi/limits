@@ -83,11 +83,29 @@ CASES = {
         "paths": {
             "/api": {"enabled": True, "requests_per_minute": 30, "burst": 10,
                      "window": "1m", "limit_by": "header_name",
-                     "limit_by_header": "x_api_key"},
+                     "limit_by_header": "X-API-Key"},
         },
         "whitelist": {"enabled": True, "ips": ["10.0.0.1"]},
         "blacklist": {"enabled": False, "ips": []},
     },
+}
+
+# Assertions on the generated text, for defects nginx cannot catch: a key that
+# is wrong but syntactically valid still passes `nginx -t`.
+CONTENT_CHECKS = {
+    "a dashed header name becomes an nginx variable": (
+        {
+            "global": {"enabled": True, "requests_per_minute": 60, "burst": 20,
+                       "window": "1m", "limit_by": "header_name",
+                       "limit_by_header": "X-API-Key"},
+            "whitelist": {"enabled": False, "ips": []},
+            "blacklist": {"enabled": False, "ips": []},
+        },
+        ["$http_x_api_key"],
+        # `$http_X-API-Key` parses as the variable `$http_X` plus the literal
+        # `-API-Key`, so the key is a constant and every client shares a bucket.
+        ["$http_X"],
+    ),
 }
 
 # Rates nginx cannot express. The generator must refuse them rather than emit
@@ -161,6 +179,17 @@ def main() -> int:
                 for line in generated.splitlines():
                     print(f"        {line}")
 
+        for name, (config, expected, forbidden) in CONTENT_CHECKS.items():
+            validated = ratelimit2nginx._validate_config(config)
+            generated = ratelimit2nginx.generate_nginx_config(validated)
+            problems = [f"expected {token!r}" for token in expected if token not in generated]
+            problems += [f"found {token!r}" for token in forbidden if token in generated]
+            if problems:
+                failures += 1
+                print(f"FAIL  {name}: " + ", ".join(problems))
+            else:
+                print(f"ok    {name}")
+
         for name, case in REJECTED.items():
             try:
                 rate = ratelimit2nginx._nginx_rate(case["requests"], case["window"])
@@ -174,7 +203,7 @@ def main() -> int:
     if failures:
         print(f"{failures} failing")
         return 1
-    print(f"{len(CASES) + len(REJECTED)} checks passed")
+    print(f"{len(CASES) + len(CONTENT_CHECKS) + len(REJECTED)} checks passed")
     return 0
 
 

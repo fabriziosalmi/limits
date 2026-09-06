@@ -190,6 +190,34 @@ def _limit_req(zone_name: str, burst: int) -> str:
     return f'limit_req zone={zone_name};'
 
 
+def _header_variable(header_name: str) -> str:
+    """
+    Converts a header name into the nginx variable that carries it.
+
+    nginx exposes a request header as `$http_` followed by the header name
+    lowercased with every `-` turned into `_`. Passing the name through as
+    written is not a syntax error, which is what makes it dangerous: nginx
+    reads `$http_X-API-Key` as the variable `$http_X` followed by the literal
+    `-API-Key`, so the zone key becomes a constant and every client shares one
+    bucket. Verified at runtime: with `X-API-Key: secret` on the request,
+    `$http_X-API-Key` evaluates to `-API-Key` while `$http_x_api_key`
+    evaluates to `secret`.
+
+    Args:
+        header_name: The header name as written in the configuration.
+
+    Returns:
+        An nginx variable, for example '$http_x_api_key'.
+
+    Raises:
+        ValueError: If the name has no usable characters.
+    """
+    normalised = re.sub(r'[^a-z0-9_]', '_', str(header_name).strip().lower())
+    if not normalised.strip('_'):
+        raise ValueError(f"invalid limit_by_header {header_name!r}: no usable characters")
+    return f'$http_{normalised}'
+
+
 def _zone_key(settings: Dict[str, Any]) -> str:
     """
     Returns the nginx variable a zone is keyed on, from the `limit_by` setting.
@@ -204,8 +232,7 @@ def _zone_key(settings: Dict[str, Any]) -> str:
     if limit_by == 'user_agent':
         return '$http_user_agent'
     if limit_by == 'header_name':
-        header_name = settings.get('limit_by_header', 'custom_header')
-        return f'$http_{header_name}'
+        return _header_variable(settings.get('limit_by_header', 'custom_header'))
     return '$binary_remote_addr'
 
 
@@ -219,7 +246,7 @@ def _whitelist_map_name(key_var: str) -> str:
     Returns:
         The name of the mapped variable, for example '$rl_key_binary_remote_addr'.
     """
-    return f'$rl_key_{key_var.lstrip("$")}'
+    return '$rl_key_' + key_var.removeprefix('$')
 
 
 def generate_nginx_config(config: Dict[str, Any]) -> str:

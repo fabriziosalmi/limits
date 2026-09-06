@@ -176,6 +176,14 @@ refuses to emit it rather than producing something nginx rejects at reload. A ra
 that does not land on a whole number of requests per minute is rounded, with a
 warning naming both the requested and the emitted value.
 
+#### Keying by a header
+
+`limit_by: header_name` with `limit_by_header: X-API-Key` is written as
+`$http_x_api_key`: nginx exposes a header as `$http_` plus the name lowercased
+with each `-` replaced by `_`. Note that a request without that header has an
+empty key, and nginx does not account requests with an empty key, so those
+requests are not limited. Key on the address instead if that matters.
+
 #### Whitelisting
 
 A whitelisted address is exempted by giving its request an empty zone key: nginx
