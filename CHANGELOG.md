@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **The nginx generator emitted a rate unit nginx does not accept, so every generated config was rejected at reload, including the shipped defaults** (#6). `limit_req_zone ... rate=` takes only `r/s` or `r/m`; `_parse_window` passed the configured window through as a unit, producing `rate=60r/1min` from the default `requests_per_minute: 60` with `window: 1m`. Verified against nginx 1.31.5: `invalid rate "rate=60r/1min"`. The window is now folded into the rate, and a rate nginx cannot express is refused rather than emitted.
+- **The nginx whitelist blanked the page for whitelisted addresses, and could not load at all.** `if ($whitelist) { set $limit_bypass 1; }` was written at `http` level, where nginx does not allow `if`, and the matching `if ($limit_bypass) { return 200; }` in the server block answered the request with an empty 200 instead of letting it through. Whitelisting now works by mapping the address to an empty zone key, which nginx does not account. Verified at runtime: an address in the whitelist is served all six of six requests against a 2r/m limit, an address outside it gets one 200 and then 503.
+- **`burst: 0` produced `burst=0`, which nginx rejects** ("invalid burst value"). The parameter is omitted when the burst is zero, which is also its default.
+- **The generated locations contained `... # Your other configurations here`**, which is not valid nginx, so the output could never be validated as it stood. It is now a comment.
+
+### Added
+
+- **`tests/smoke_nginx.py`**, which generates configuration for nine scenarios and validates each with the real `nginx -t`, plus a `validate` workflow that runs it on every push and pull request and also checks the committed `rate_limit_rules/nginx/nginx_rate_limit.conf`. The defect above survived for over a year because nothing validated the output with the server it targets.
+- A comment above each `limit_req_zone` recording the requests and window it was generated from.
+
+
 ### Added
 - Comprehensive documentation improvements
 - README files for each web server configuration directory (Nginx, Apache, Traefik, HAProxy)
