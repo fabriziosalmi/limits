@@ -62,3 +62,32 @@ jobs:
             echo '}'
           } > "$workdir/nginx.conf"
           nginx -t -c "$workdir/nginx.conf" -p "$workdir"
+
+  apache:
+    name: Apache accepts the generated configuration
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # mod_evasive is third-party; Ubuntu ships 1.10.1, the version without
+      # CIDR whitelists and without DOSEnabled, which the generator targets too.
+      - name: Install Apache with mod_evasive
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y apache2 libapache2-mod-evasive
+          sudo a2enmod evasive
+          apache2 -v
+
+      # apache2ctl reads the packaged configuration, which needs root.
+      - name: Validate the generated configuration
+        run: sudo env "PATH=$PATH" python3 tests/smoke_apache.py
+
+      - name: Validate the committed configuration
+        run: sudo apache2ctl -t -c "Include $PWD/rate_limit_rules/apache/apache_rate_limit.conf"

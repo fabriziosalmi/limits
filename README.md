@@ -4,7 +4,7 @@ Python scripts that generate rate limiting configuration files for common web se
 
 ## Features
 
-*   **Multi-Web Server Support:** Generates rate limiting configurations for Apache (mod_ratelimit), Nginx, Traefik, and HAProxy.
+*   **Multi-Web Server Support:** Generates rate limiting configurations for Apache (mod_evasive), Nginx, Traefik, and HAProxy.
 *   **Centralized Configuration:** Uses a single `config.yaml` file to define global and path-specific rate limits, as well as IP whitelisting/blacklisting.
 *   **Automated Config Generation:** GitHub Actions runs the generation scripts daily and commits the resulting files to `rate_limit_rules/`.
 *   **Limiting Strategies:** Supports limiting by IP address, User-Agent, or a named request header.
@@ -13,7 +13,7 @@ Python scripts that generate rate limiting configuration files for common web se
 ## Supported Web Servers
 
 *   **Nginx**
-*   **Apache** (mod_ratelimit)
+*   **Apache** (mod_evasive: one limit per client IP; per-path limits are not supported)
 *   **Traefik**
 *   **HAProxy**
 
@@ -26,7 +26,7 @@ Python scripts that generate rate limiting configuration files for common web se
 limits/
 ├── rate_limit_rules/       # Generated rate limit config files
 │   ├── nginx/              # Nginx rate limit configs
-│   ├── apache/             # Apache rate limit configs (mod_ratelimit)
+│   ├── apache/             # Apache rate limit configs (mod_evasive)
 │   ├── traefik/            # Traefik rate limit configs
 │   └── haproxy/            # HAProxy rate limit configs
 ├── import_apache_rate_limit.py
@@ -35,7 +35,7 @@ limits/
 ├── import_traefik_rate_limit.py
 ├── ratelimit.py            # Loads and validates config.yaml
 ├── ratelimit2nginx.py      # Generates Nginx config
-├── ratelimit2apache.py     # Generates Apache mod_ratelimit config
+├── ratelimit2apache.py     # Generates Apache mod_evasive config
 ├── ratelimit2traefik.py    # Generates Traefik config
 ├── ratelimit2haproxy.py    # Generates HAProxy config
 ├── config.yaml             # Rate limit definitions
@@ -103,7 +103,7 @@ limits/
 
 *   The `ratelimit.py` script loads and validates the configurations from `config.yaml`.
 *   `ratelimit2nginx.py` generates Nginx configuration
-*   `ratelimit2apache.py` generates Apache mod_ratelimit configuration
+*   `ratelimit2apache.py` generates Apache mod_evasive configuration
 *   `ratelimit2traefik.py` generates Traefik configuration
 *   `ratelimit2haproxy.py` generates HAProxy configuration
 
@@ -123,7 +123,7 @@ Before you begin, ensure you have the following installed on your system:
 *   **Git**: For cloning the repository
 *   **A supported web server**: At least one of the following:
     *   Nginx
-    *   Apache with mod_ratelimit
+    *   Apache with mod_evasive
     *   Traefik
     *   HAProxy
 
@@ -193,8 +193,10 @@ block and a `map` per key, which is why a whitelist costs nothing at request tim
 and does not need an `if`.
 
 ### 2. Apache Rate Limit Integration
+  * Install and enable mod_evasive (Debian/Ubuntu: `apt-get install libapache2-mod-evasive && a2enmod evasive`). It is a third-party module, not part of stock Apache.
   * Copy `rate_limit_rules/apache/apache_rate_limit.conf` to your server.
-  * Include the configuration in your apache virtualhost configuration file or inside a `.htaccess` file.
+  * Include it in the server configuration or a virtual host. mod_evasive directives are not valid in `.htaccess`.
+  * What it does: one request limit per client IP, the global `requests_per_minute` over `window`. mod_evasive cannot limit per path, per user agent or per header, and has no burst; those settings are written into the file as comments and reported as warnings. It counts per Apache child process, so a client is refused somewhat later than the exact limit.
 
   ```apache
   <VirtualHost *:80>
@@ -418,7 +420,7 @@ See the `LICENSE` file for details.
 ## Resources
 
 *   [Nginx Rate Limiting](https://docs.nginx.com/nginx/admin-guide/security/rate-limiting/)
-*   [Apache mod_ratelimit](https://httpd.apache.org/docs/2.4/mod/mod_ratelimit.html)
+*   [Apache mod_evasive (Debian package)](https://packages.debian.org/trixie/libapache2-mod-evasive)
 *   [Traefik Rate Limiting](https://doc.traefik.io/traefik/middlewares/http/ratelimit/)
 *   [HAProxy Rate Limiting](https://www.haproxy.com/blog/rate-limiting-with-haproxy/)
 
